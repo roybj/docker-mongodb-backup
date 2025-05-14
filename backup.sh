@@ -28,11 +28,11 @@ done
 BACKUP_ARCHIVE="/tmp/mongo_backup_$DATE.tar.gz"
 tar -czf "$BACKUP_ARCHIVE" -C "$BACKUP_DIR" .
 
-# Ensure the S3 backup directory exists
-aws s3api head-object --bucket "$S3_BUCKET" --key "$S3_BACKUP_DIRECTORY/" 2>/dev/null || aws s3api put-object --bucket "$S3_BUCKET" --key "$S3_BACKUP_DIRECTORY/"
+# Ensure the S3 backup path exists
+aws s3api head-object --bucket "$S3_BUCKET" --key "$S3_BACKUP_PATH/" 2>/dev/null || aws s3api put-object --bucket "$S3_BUCKET" --key "$S3_BACKUP_PATH/"
 
 # Update the backup path to include the directory
-BACKUP_PATH="$S3_BACKUP_DIRECTORY/$S3_BACKUP_PATH/mongo_backup_$DATE.tar.gz"
+BACKUP_PATH="$S3_BACKUP_PATH/mongo_backup_$DATE.tar.gz"
 
 # Upload to S3
 aws s3 cp "$BACKUP_ARCHIVE" "s3://$S3_BUCKET/$BACKUP_PATH" --storage-class STANDARD
