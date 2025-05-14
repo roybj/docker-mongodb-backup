@@ -34,8 +34,10 @@ COPY cronjob /etc/cron.d/backup-cron
 # Make the backup script executable
 RUN chmod +x /app/backup.sh
 
-# Apply cron job
-RUN crontab /etc/cron.d/backup-cron
+# Dynamically replace the CRON_TIME placeholder in the cronjob file
+RUN sed -i "s|CRON_TIME_PLACEHOLDER|${CRON_TIME:-0 2 * * *}|" /etc/cron.d/backup-cron && \
+    chmod 0644 /etc/cron.d/backup-cron && \
+    crontab /etc/cron.d/backup-cron
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
