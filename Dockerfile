@@ -38,8 +38,7 @@ RUN chmod +x /app/backup.sh
 RUN sed -i "s|CRON_TIME_PLACEHOLDER|${CRON_TIME:-0 2 * * *}|" /etc/cron.d/backup-cron && \
     echo "" >> /etc/cron.d/backup-cron && \
     chmod 0644 /etc/cron.d/backup-cron && \
-    cat /etc/cron.d/backup-cron && \
-    crontab /etc/cron.d/backup-cron
+    cat /etc/cron.d/backup-cron
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
