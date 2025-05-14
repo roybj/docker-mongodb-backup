@@ -49,9 +49,18 @@ rm -rf "$BACKUP_DIR"
 rm -f "$BACKUP_ARCHIVE"
 
 # Delete old backups from S3
+# Calculate the cutoff date for retention
+CUTOFF_DATE=$(date -d "$RETENTION_PERIOD days ago" +"%Y-%m-%d")
+
+# List files in S3 bucket and delete old backups
 aws s3 ls "s3://$S3_BUCKET/$S3_BACKUP_PATH/" --endpoint-url "$S3_ENDPOINT" | awk '{print $4}' | while read -r FILE; do
-    FILE_DATE=$(echo "$FILE" | grep -oE "[0-9]{4}-[0-9]{2}-[0-9]{2}")
-    if [[ "$FILE_DATE" < $(date -d "$RETENTION_PERIOD days ago" +"%Y-%m-%d") ]]; then
-        aws s3 rm "s3://$S3_BUCKET/$S3_BACKUP_PATH/$FILE" --endpoint-url "$S3_ENDPOINT"
+    # Extract date from filename using regex
+    if [[ $FILE =~ mongo_backup_([0-9]{4}-[0-9]{2}-[0-9]{2})\.tar\.gz ]]; then
+        FILE_DATE="${BASH_REMATCH[1]}"
+        # Compare dates as strings (YYYY-MM-DD format allows for string comparison)
+        if [[ "$FILE_DATE" < "$CUTOFF_DATE" ]]; then
+            echo "Deleting old backup: $FILE (date: $FILE_DATE, cutoff: $CUTOFF_DATE)"
+            aws s3 rm "s3://$S3_BUCKET/$S3_BACKUP_PATH/$FILE" --endpoint-url "$S3_ENDPOINT"
+        fi
     fi
 done

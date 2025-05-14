@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     cron \
     awscli \
     gnupg \
+    less \
     && rm -rf /var/lib/apt/lists/*
 
 # Install wget before adding MongoDB repository
