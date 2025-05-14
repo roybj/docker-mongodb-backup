@@ -1,0 +1,11 @@
+# Cron job to run the backup script daily at a configurable time
+# The time can be adjusted by setting the CRON_TIME environment variable
+SHELL=/bin/bash
+BASH_ENV=/app/.env
+
+# Ensure the timezone is sourced from the .env file
+TZ=${TZ:-UTC}
+export TZ
+
+# Use the CRON_TIME environment variable dynamically
+${CRON_TIME} /app/backup.sh >> /var/log/cron.log 2>&1
