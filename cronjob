@@ -7,4 +7,4 @@ TZ=${TZ:-UTC}
 export TZ
 
 # Placeholder for cron time, to be replaced dynamically
-CRON_TIME_PLACEHOLDER /app/backup.sh >> /var/log/cron.log 2>&1
+CRON_TIME_PLACEHOLDER root /app/backup.sh >> /var/log/cron.log 2>&1
