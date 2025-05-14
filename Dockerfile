@@ -19,7 +19,7 @@ RUN curl -fsSL https://www.mongodb.org/static/pgp/server-6.0.asc | gpg --dearmor
     echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-archive-keyring.gpg ] https://repo.mongodb.org/apt/debian buster/mongodb-org/6.0 main" > /etc/apt/sources.list.d/mongodb-org-6.0.list && \
     apt-get update && apt-get install -y mongodb-mongosh mongodb-org-tools && rm -rf /var/lib/apt/lists/*
 
-# Pull the timezone from the .env file
+# Get timezone from environment variables (provided by Caprover)
 ARG TZ
 ENV TZ=$TZ
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone

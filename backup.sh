@@ -1,10 +1,16 @@
 #!/bin/bash
 
-# Ensure the timezone is set from the .env file
+# Ensure the timezone is set from environment variables
 export TZ=${TZ:-UTC}
 
-# Load environment variables
-source "/app/.env"
+# No need to source .env file as variables will be provided by Caprover
+# Set default values for required variables if not provided
+MONGO_HOST=${MONGO_HOST:-localhost}
+MONGO_PORT=${MONGO_PORT:-27017}
+MONGO_USER=${MONGO_USER:-admin}
+MONGO_PASSWORD=${MONGO_PASSWORD:-password}
+S3_BUCKET=${S3_BUCKET:-backup-bucket}
+S3_BACKUP_PATH=${S3_BACKUP_PATH:-mongodb-backups}
 
 # Set default retention period if not defined
 RETENTION_PERIOD=${RETENTION_PERIOD:-30}
@@ -17,11 +23,11 @@ BACKUP_DIR="/tmp/mongo_backups_$DATE"
 mkdir -p "$BACKUP_DIR"
 
 # Get a list of all databases
-DATABASES=$(mongo --quiet --host "$MONGO_HOST" --port "$MONGO_PORT" -u "$MONGO_USER" -p '$MONGO_PASSWORD' --authenticationDatabase admin --eval "db.adminCommand('listDatabases').databases.map(db => db.name).join(' ')" 2>/dev/null)
+DATABASES=$(mongosh --quiet --host "$MONGO_HOST" --port "$MONGO_PORT" -u "$MONGO_USER" -p "$MONGO_PASSWORD" --authenticationDatabase admin --eval "db.adminCommand('listDatabases').databases.map(db => db.name).join(' ')" 2>/dev/null)
 
 # Backup each database individually
 for DB in $DATABASES; do
-    mongodump --host "$MONGO_HOST" --port "$MONGO_PORT" -u "$MONGO_USER" -p '$MONGO_PASSWORD' --authenticationDatabase admin --db "$DB" --out "$BACKUP_DIR/$DB"
+    mongodump --host "$MONGO_HOST" --port "$MONGO_PORT" -u "$MONGO_USER" -p "$MONGO_PASSWORD" --authenticationDatabase admin --db "$DB" --out "$BACKUP_DIR/$DB"
 done
 
 # Compress the backups

@@ -1,8 +1,9 @@
 # Cron job to run the backup script daily at a configurable time
 SHELL=/bin/bash
-BASH_ENV=/app/.env
 
-# Ensure the timezone is sourced from the .env file
+# No need for BASH_ENV as environment variables are provided by Caprover
+# Timezone will be available from the container environment
+# Export TZ to make it available to the cron job
 TZ=${TZ:-UTC}
 export TZ
 
