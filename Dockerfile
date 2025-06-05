@@ -39,16 +39,16 @@ RUN chmod +x /app/backup.sh /app/entrypoint.sh
 # Ensure cron.log exists and is writable
 RUN touch /var/log/cron.log && chmod 0644 /var/log/cron.log
 
-# Dynamically replace the CRON_TIME placeholder in the cronjob file
+# Set up crontab properly - fix crontab format before installing
 RUN sed -i "s|CRON_TIME_PLACEHOLDER|${CRON_TIME:-0 2 * * *}|" /etc/cron.d/backup-cron && \
-    echo "" >> /etc/cron.d/backup-cron && \
     chmod 0644 /etc/cron.d/backup-cron && \
-    # Register crontab file
-    crontab /etc/cron.d/backup-cron && \
-    cat /etc/cron.d/backup-cron
+    # Install crontab
+    cat /etc/cron.d/backup-cron > /tmp/crontab && \
+    crontab /tmp/crontab && \
+    rm /tmp/crontab
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 
-# Use the entrypoint script to start cron and tail logs
+# Use the entrypoint script
 ENTRYPOINT ["/app/entrypoint.sh"]
