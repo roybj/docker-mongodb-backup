@@ -1,5 +1,6 @@
 # Cron job to run the backup script daily at a configurable time
 SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # No need for BASH_ENV as environment variables are provided by Caprover
 # Timezone will be available from the container environment
@@ -9,3 +10,4 @@ export TZ
 
 # Cron job format: minute hour day month weekday user command
 CRON_TIME_PLACEHOLDER root /app/backup.sh >> /var/log/cron.log 2>&1
+# An empty line is required at the end of this file for a valid cron file

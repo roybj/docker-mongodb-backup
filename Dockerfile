@@ -31,18 +31,24 @@ WORKDIR /app
 # Copy the backup script and cronjob file
 COPY backup.sh /app/backup.sh
 COPY cronjob /etc/cron.d/backup-cron
+COPY entrypoint.sh /app/entrypoint.sh
 
-# Make the backup script executable
-RUN chmod +x /app/backup.sh
+# Make scripts executable
+RUN chmod +x /app/backup.sh /app/entrypoint.sh
+
+# Ensure cron.log exists and is writable
+RUN touch /var/log/cron.log && chmod 0644 /var/log/cron.log
 
 # Dynamically replace the CRON_TIME placeholder in the cronjob file
 RUN sed -i "s|CRON_TIME_PLACEHOLDER|${CRON_TIME:-0 2 * * *}|" /etc/cron.d/backup-cron && \
     echo "" >> /etc/cron.d/backup-cron && \
     chmod 0644 /etc/cron.d/backup-cron && \
+    # Register crontab file
+    crontab /etc/cron.d/backup-cron && \
     cat /etc/cron.d/backup-cron
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 
-# Start the cron service
-CMD ["cron", "-f"]
+# Use the entrypoint script to start cron and tail logs
+ENTRYPOINT ["/app/entrypoint.sh"]
