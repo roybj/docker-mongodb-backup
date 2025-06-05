@@ -10,6 +10,8 @@ echo "Current time: $(date)"
 
 # Install the crontab at container startup (more reliable than during build)
 echo "Installing crontab..."
+# Ensure cronjob file has a newline at the end
+echo "" >> /etc/cron.d/backup-cron
 crontab /etc/cron.d/backup-cron
 echo "Crontab installed:"
 crontab -l
