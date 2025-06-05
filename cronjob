@@ -2,9 +2,6 @@
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
-# Set timezone
-TZ=${TZ:-UTC}
-export TZ
-
 # Cron job format: minute hour day month weekday command
-CRON_TIME_PLACEHOLDER /app/backup.sh >> /var/log/cron.log 2>&1
+# This placeholder will be replaced with the actual cron schedule
+0 2 * * * /app/backup.sh >> /var/log/cron.log 2>&1

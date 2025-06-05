@@ -8,21 +8,27 @@ echo "MongoDB backup container starting..."
 echo "Current timezone: $(date +%Z)"
 echo "Current time: $(date)"
 
-# Confirm cron service is installed
-if ! command -v cron &> /dev/null; then
-    echo "ERROR: cron not installed"
-    exit 1
-fi
-
-# Display current cron configuration
-echo "Current cron configuration:"
+# Install the crontab at container startup (more reliable than during build)
+echo "Installing crontab..."
+crontab /etc/cron.d/backup-cron
+echo "Crontab installed:"
 crontab -l
 
 # Start the cron daemon
 echo "Starting cron daemon..."
-service cron start || cron
+cron -f &
+CRON_PID=$!
+
+# Run an initial backup if requested
+if [ "${RUN_ON_STARTUP}" = "true" ]; then
+    echo "Running initial backup..."
+    /app/backup.sh
+    echo "Initial backup completed."
+fi
 
 # Keep container running and follow the logs
 echo "Container started successfully. Tailing logs..."
-touch /var/log/cron.log
-tail -f /var/log/cron.log
+tail -f /var/log/cron.log &
+
+# Wait for cron process
+wait $CRON_PID
