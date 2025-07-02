@@ -34,9 +34,10 @@ COPY cronjob /etc/cron.d/backup-cron
 COPY entrypoint.sh /app/entrypoint.sh
 COPY test-cron.sh /app/test-cron.sh
 COPY health-check.sh /app/health-check.sh
+COPY debug-env.sh /app/debug-env.sh
 
 # Make scripts executable
-RUN chmod +x /app/backup.sh /app/entrypoint.sh /app/test-cron.sh /app/health-check.sh
+RUN chmod +x /app/backup.sh /app/entrypoint.sh /app/test-cron.sh /app/health-check.sh /app/debug-env.sh
 
 # Ensure cron.log exists and is writable
 RUN touch /var/log/cron.log && chmod 0644 /var/log/cron.log

@@ -15,6 +15,12 @@ handle_error() {
 log "Starting MongoDB backup process..."
 export TZ=${TZ:-UTC}
 
+# Debug: Log current environment variables
+log "Debug: Environment variables at start:"
+log "MONGO_HOST: ${MONGO_HOST:-'NOT SET'}"
+log "MONGO_PORT: ${MONGO_PORT:-'NOT SET'}"
+log "S3_BUCKET: ${S3_BUCKET:-'NOT SET'}"
+
 # No need to source .env file as variables will be provided by Caprover
 # Configure AWS credentials if provided
 if [ -n "$AWS_ACCESS_KEY_ID" ] && [ -n "$AWS_SECRET_ACCESS_KEY" ]; then

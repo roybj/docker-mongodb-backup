@@ -16,7 +16,19 @@ echo "Current time: $(date)"
 
 # Create environment file for cron
 echo "Creating environment file..."
-printenv | grep -vE '^(PWD|OLDPWD|SHLVL|_|CRON_PID)' > /app/cogen.env
+# Export all current environment variables to the cogen.env file
+printenv | grep -vE '^(PWD|OLDPWD|SHLVL|_|CRON_PID)' | while IFS='=' read -r name value; do
+    # Properly escape the value and export it
+    echo "export $name='$value'" >> /app/cogen.env
+done
+
+# Verify the environment file contains our MongoDB and S3 variables
+echo "Environment file created. Key variables:"
+grep -E '^export (MONGO_|S3_|AWS_|TZ|RETENTION_)' /app/cogen.env || echo "Warning: Some environment variables may be missing"
+
+# Debug: Show all environment variables for troubleshooting
+echo "Debug: All environment variables in cogen.env:"
+cat /app/cogen.env | head -20
 
 # Set up cron schedule - use CRON_TIME if provided, otherwise default to 2 AM daily
 CRON_SCHEDULE="${CRON_TIME:-0 2 * * *}"
