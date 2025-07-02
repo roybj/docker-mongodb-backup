@@ -48,6 +48,18 @@ RUN if [ ! -z "${CRON_TIME}" ]; then \
     chmod 0644 /etc/cron.d/backup-cron
 
 # Set environment variables
+ENV MONGO_HOST=localhost \
+    MONGO_PORT=27017 \
+    MONGO_USER=admin \
+    MONGO_PASSWORD=password \
+    S3_BUCKET=backup-bucket \
+    S3_BACKUP_PATH=mongodb-backups \
+    S3_ENDPOINT=https://s3.amazonaws.com \
+    RETENTION_PERIOD=30 \
+    RUN_ON_STARTUP=false
+
+# Set the entrypoint
+CMD ["/app/entrypoint.sh"]
 ENV PYTHONUNBUFFERED=1
 
 # Use the entrypoint script to start cron and tail logs
