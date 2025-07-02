@@ -1,36 +1,49 @@
 #!/bin/bash
 set -e
 
-# Output message to show that container is starting
 echo "MongoDB backup container starting..."
 
-# Make sure timezone is properly set
+# Set system timezone from $TZ
+if [ -n "$TZ" ]; then
+    echo "Setting timezone to $TZ"
+    ln -sf "/usr/share/zoneinfo/$TZ" /etc/localtime
+    echo "$TZ" > /etc/timezone
+    dpkg-reconfigure -f noninteractive tzdata >/dev/null 2>&1
+fi
+
 echo "Current timezone: $(date +%Z)"
 echo "Current time: $(date)"
 
-# Install the crontab at container startup (more reliable than during build)
-echo "Installing crontab..."
-# Ensure cronjob file has a newline at the end
-echo "" >> /etc/cron.d/backup-cron
-crontab /etc/cron.d/backup-cron
-echo "Crontab installed:"
-crontab -l
+# Create environment file for cron
+echo "Creating environment file..."
+printenv | grep -vE '^(PWD|OLDPWD|SHLVL|_|CRON_PID)' > /app/cogen.env
 
-# Start the cron daemon
-echo "Starting cron daemon..."
-cron -f &
-CRON_PID=$!
+# Update cron command to match original format + environment loading
+echo "SHELL=/bin/bash" > /etc/cron.d/backup-cron
+echo "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" >> /etc/cron.d/backup-cron
+echo "0 2 * * * root . /app/cogen.env; /app/backup.sh >> /var/log/cron.log 2>&1" >> /etc/cron.d/backup-cron
 
-# Run an initial backup if requested
-if [ "${RUN_ON_STARTUP}" = "true" ]; then
+# Ensure proper permissions
+chmod 0644 /etc/cron.d/backup-cron
+
+echo "Cron job contents:"
+cat /etc/cron.d/backup-cron
+
+# Initialize log file
+touch /var/log/cron.log
+echo "Cron initialized at $(date)" >> /var/log/cron.log
+
+# Start cron service
+echo "Starting cron service..."
+service cron start
+
+# Run initial backup if requested
+if [ "${RUN_ON_STARTUP,,}" = "true" ]; then
     echo "Running initial backup..."
+    . /app/cogen.env
     /app/backup.sh
-    echo "Initial backup completed."
+    echo "Initial backup completed at $(date)"
 fi
 
-# Keep container running and follow the logs
-echo "Container started successfully. Tailing logs..."
-tail -f /var/log/cron.log &
-
-# Wait for cron process
-wait $CRON_PID
+echo "Container started. Tailing cron logs..."
+tail -F /var/log/cron.log
