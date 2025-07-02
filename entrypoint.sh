@@ -18,10 +18,15 @@ echo "Current time: $(date)"
 echo "Creating environment file..."
 printenv | grep -vE '^(PWD|OLDPWD|SHLVL|_|CRON_PID)' > /app/cogen.env
 
+# Set up cron schedule - use CRON_TIME if provided, otherwise default to 2 AM daily
+CRON_SCHEDULE="${CRON_TIME:-0 2 * * *}"
+echo "Setting up cron job with schedule: $CRON_SCHEDULE"
+
 # Update cron command to match original format + environment loading
 echo "SHELL=/bin/bash" > /etc/cron.d/backup-cron
 echo "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" >> /etc/cron.d/backup-cron
-echo "0 2 * * * root . /app/cogen.env; /app/backup.sh >> /var/log/cron.log 2>&1" >> /etc/cron.d/backup-cron
+echo "$CRON_SCHEDULE root . /app/cogen.env; /app/backup.sh >> /var/log/cron.log 2>&1" >> /etc/cron.d/backup-cron
+echo "" >> /etc/cron.d/backup-cron  # Important: cron files need to end with a newline
 
 # Ensure proper permissions
 chmod 0644 /etc/cron.d/backup-cron
@@ -37,6 +42,22 @@ echo "Cron initialized at $(date)" >> /var/log/cron.log
 echo "Starting cron service..."
 service cron start
 
+# Verify cron service is running
+if ! service cron status > /dev/null 2>&1; then
+    echo "ERROR: Cron service failed to start!"
+    exit 1
+fi
+
+# Restart cron to ensure it picks up the new job
+service cron restart
+echo "Cron service restarted and running"
+
+# List active cron jobs for verification
+echo "Active cron jobs:"
+crontab -l 2>/dev/null || echo "No user crontab"
+echo "System cron jobs in /etc/cron.d/:"
+ls -la /etc/cron.d/
+
 # Run initial backup if requested
 if [ "${RUN_ON_STARTUP,,}" = "true" ]; then
     echo "Running initial backup..."
@@ -45,5 +66,21 @@ if [ "${RUN_ON_STARTUP,,}" = "true" ]; then
     echo "Initial backup completed at $(date)"
 fi
 
-echo "Container started. Tailing cron logs..."
+# Add a cron monitoring function
+monitor_cron() {
+    while true; do
+        sleep 3600  # Check every hour
+        if ! service cron status > /dev/null 2>&1; then
+            echo "WARNING: Cron service stopped! Restarting..."
+            service cron start
+        fi
+    done
+}
+
+# Start cron monitoring in background
+monitor_cron &
+
+echo "Container started. Cron is scheduled to run: $CRON_SCHEDULE"
+echo "Next scheduled run: $(date -d 'tomorrow 02:00' 2>/dev/null || echo 'Check logs for actual schedule')"
+echo "Tailing cron logs..."
 tail -F /var/log/cron.log

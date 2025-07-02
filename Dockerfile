@@ -32,20 +32,14 @@ WORKDIR /app
 COPY backup.sh /app/backup.sh
 COPY cronjob /etc/cron.d/backup-cron
 COPY entrypoint.sh /app/entrypoint.sh
+COPY test-cron.sh /app/test-cron.sh
+COPY health-check.sh /app/health-check.sh
 
 # Make scripts executable
-RUN chmod +x /app/backup.sh /app/entrypoint.sh
+RUN chmod +x /app/backup.sh /app/entrypoint.sh /app/test-cron.sh /app/health-check.sh
 
 # Ensure cron.log exists and is writable
 RUN touch /var/log/cron.log && chmod 0644 /var/log/cron.log
-
-# Set up the cron job - using a more reliable approach
-RUN if [ ! -z "${CRON_TIME}" ]; then \
-        # Replace the default schedule with the provided one
-        sed -i "s|0 2 \* \* \*|${CRON_TIME}|" /etc/cron.d/backup-cron; \
-    fi && \
-    # Make sure cron file is in the correct format
-    chmod 0644 /etc/cron.d/backup-cron
 
 # Set environment variables
 ENV MONGO_HOST=localhost \
